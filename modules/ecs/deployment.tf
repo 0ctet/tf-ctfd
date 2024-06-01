@@ -63,8 +63,8 @@ module "container_definition" {
   version                  = "0.61.1"
   container_name           = var.app_name
   container_image          = var.ctfd_image
-  container_memory         = 2048
-  container_cpu            = 1024
+  container_memory         = 4096
+  container_cpu            = 2048
   readonly_root_filesystem = false
 
   repository_credentials = var.registry_password != null ? { credentialsParameter = aws_secretsmanager_secret_version.registry_creds[0].arn } : null
@@ -193,6 +193,32 @@ data "aws_iam_policy_document" "s3_full_access" {
     ]
   }
 }
+data "aws_iam_policy_document" "ecs_full_access" {
+  version = "2012-10-17"
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeSecurityGroups",
+      "ecs:DescribeTaskDefinition",
+      "iam:PassRole",
+      "ec2:DescribeNetworkInterfaces",
+      "ecs:RunTask",
+      "ec2:DescribeVpcs",
+      "ecs:StopTask",
+      "ecs:ListContainerInstances",
+      "ec2:DescribeSubnets",
+      "ecs:TagResource",
+      "ecs:DescribeTasks",
+      "ecs:ListTaskDefinitions",
+      "ecs:ListClusters",
+      "ecs:DescribeClusters"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+}
 resource "aws_iam_role" "ecs_task_role" {
   name               = "ecs-task-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
@@ -202,13 +228,18 @@ resource "aws_iam_role_policy" "s3_full_access" {
   role   = aws_iam_role.ecs_task_role.name
   policy = data.aws_iam_policy_document.s3_full_access.json
 }
+resource "aws_iam_role_policy" "ecs_full_access" {
+  name   = "ecs_full_access"
+  role   = aws_iam_role.ecs_task_role.name
+  policy = data.aws_iam_policy_document.ecs_full_access.json
+}
 
 resource "aws_ecs_task_definition" "ctfd" {
   family                   = var.app_name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = 1024
-  memory                   = 2048
+  cpu                      = 2048
+  memory                   = 4096
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
   container_definitions    = module.container_definition.json_map_encoded_list
