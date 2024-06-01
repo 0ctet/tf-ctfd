@@ -18,12 +18,12 @@ init_all: init init_examples init_tests init_modules
 .PHONY : test
 ## Run tests
 test: init_tests
-	pushd $(TESTDIR) && go test -v -timeout 10m -run TestDocker && popd
+	pushd "$(TESTDIR)" && go test -v -timeout 10m -run TestDocker && popd
 
 .PHONY : test_aws
 ## Run tests
 test_aws: init_tests
-	pushd $(TESTDIR) && go test -v -timeout 40m -run TestAws && popd
+	pushd "$(TESTDIR)" && go test -v -timeout 40m -run TestAws && popd
 
 .PHONY : init
 init:
@@ -31,21 +31,21 @@ init:
 
 .PHONY : init_tests
 init_tests:
-	for TEST in $(TEST_FIXTURES); do \
+	for TEST in "$(TEST_FIXTURES)"; do \
 		echo "terraform init $$TEST"; \
 		pushd $$TEST && terraform init -upgrade -input=false -backend=false && popd; \
 	done
 
 .PHONY : init_examples
 init_examples:
-	for EXAMPLE in $(EXAMPLES); do \
+	for EXAMPLE in "$(EXAMPLES)"; do \
 		echo "terraform init $$EXAMPLE"; \
 		pushd $$EXAMPLE && terraform init -upgrade -input=false -backend=false && popd; \
 	done
 
 .PHONY : init_modules
 init_modules:
-	for MODULE in $(MODULES); do \
+	for MODULE in "$(MODULES)"; do \
 		echo "terraform init $$MODULE"; \
 		pushd $$MODULE && terraform init -upgrade -input=false -backend=false && popd; \
 	done
